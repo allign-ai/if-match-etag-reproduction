@@ -14,7 +14,7 @@ curl -i -X GET \
   https://if-match-etag-reproduction.vercel.app/api/resource/1
 ```
 
-You'll notice that the ETag header value has been prefixed with W/. Interestingly, if you exclude all the the `Accept-Encoding` header, the ETag value is not prefixed with a W/:
+You'll notice that the ETag header value has been prefixed with W/. Interestingly, if you exclude the `Accept-Encoding` header, the ETag value is not prefixed with a W/:
 
 ```bash
 curl -i -X GET \
