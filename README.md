@@ -1,5 +1,44 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Issue Reproduction
+
+Note that the GET endpoint at /resource/[resourceId] adds an ETag header in the form "hash". I would expect it to be received by a client as-is. However, if you run:
+
+```bash
+curl -i -X GET \
+  -H "Cache-Control: no-cache" \
+  -H "User-Agent: PostmanRuntime/7.43.3" \
+  -H "Accept: */*" \
+  -H "Accept-Encoding: gzip, deflate, br" \
+  -H "Connection: keep-alive" \
+  https://if-match-etag-reproduction.vercel.app/api/resource/1
+```
+
+You'll notice that the ETag header value has been prefixed with W/. Interestingly, if you exclude all the the `Accept-Encoding` header, the ETag value is not prefixed with a W/:
+
+```bash
+curl -i -X GET \
+  -H "Cache-Control: no-cache" \
+  -H "User-Agent: PostmanRuntime/7.43.3" \
+  -H "Accept: */*" \
+  -H "Connection: keep-alive" \
+  https://if-match-etag-reproduction.vercel.app/api/resource/1
+```
+
+If you run:
+
+```bash
+curl -i -X PATCH -H "If-Match: \"abc123\"" https://if-match-etag-reproduction.vercel.app/api/resource/1
+```
+
+This will return a 412 error response including a x-vercel-error header with value PRECONDITION_FAILED, despite the NextJS app returning a 200 response. For example:
+
+https://vercel.com/allign/if-match-etag-reproduction/HywR72TAN6AazWcraWDCGaEr4JLi/logs?selectedLogId=8v8mb-1745424555357-045243b2df13
+
+However, in the case of a PATCH, you would expect the ETag returned in the response to be different to the If-Match header value because the resource has been modified.
+
+This behaviour prevents the use of If-Match/ETag for concurrency control.
+
 ## Getting Started
 
 First, run the development server:
